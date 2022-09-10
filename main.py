@@ -9,16 +9,15 @@ INPUT_IMAGE = '01 - Original.bmp'
 def filtro_media_ingenuo(img, janela=3):
     meia_janela = janela//2
     janela_total = (janela)**2
-    altura, largura, canais = img.shape
+    altura, largura = img.shape
     for y in range(meia_janela, altura - meia_janela):
         for x in range(meia_janela, largura - meia_janela):
-            for c in range(canais):
-                soma = 0.0
-                for dy in range(-meia_janela, meia_janela + 1):
-                    for dx in range(-meia_janela, meia_janela + 1):
-                        soma += img[y + dy, x + dx, c]
-                img[y, x, c] = soma/janela_total
-    pass
+            soma = 0.0
+            for dy in range(-meia_janela, meia_janela + 1):
+                for dx in range(-meia_janela, meia_janela + 1):
+                    soma += img[y + dy, x + dx]
+            img[y, x] = soma/janela_total
+
 
 def main ():
     IMAGE_PREFIX = sys.argv[1] if len(sys.argv) > 1 else INPUT_IMAGE_PREFIX
@@ -33,7 +32,12 @@ def main ():
     # Convertemos para float32.
     img = img.astype (np.float32) / 255
 
-    filtro_media_ingenuo(img, 3)
+    B, G, R = cv2.split(img)
+
+    for canal in (B, G, R):
+        filtro_media_ingenuo(canal, 3)
+
+    img = cv2.merge([B, G, R])
 
     cv2.imwrite (f'out/{IMAGE_PREFIX}01 - Borrada.png', img*255)
 
