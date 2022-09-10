@@ -6,17 +6,41 @@ import cv2
 INPUT_IMAGE_PREFIX =  'a'
 INPUT_IMAGE = '01 - Original.bmp'
 
-def filtro_media_ingenuo(img, janela=3):
+def filtro_media_ingenuo(img, janela):
     meia_janela = janela//2
     janela_total = (janela)**2
     altura, largura = img.shape
+    img2 = img.copy()
     for y in range(meia_janela, altura - meia_janela):
         for x in range(meia_janela, largura - meia_janela):
             soma = 0.0
             for dy in range(-meia_janela, meia_janela + 1):
                 for dx in range(-meia_janela, meia_janela + 1):
-                    soma += img[y + dy, x + dx]
+                    soma += img2[y + dy, x + dx]
             img[y, x] = soma/janela_total
+
+def filtro_media_separavel(img, janela):
+    meia_janela = janela//2
+    altura, largura = img.shape
+    img2 = img.copy()
+    fms_horiz(img, img2, meia_janela, altura, largura, janela)
+    fms_vert(img2, img, meia_janela, altura, largura, janela)
+
+def fms_horiz(entrada, saida, meia_janela, altura, largura, janela):
+    for y in range(meia_janela, altura - meia_janela):
+        for x in range(meia_janela, largura - meia_janela):
+            soma = 0.0
+            for dy in range(-meia_janela, meia_janela + 1):
+                soma += entrada[y+dy, x]
+            saida[y,x] = soma/janela
+
+def fms_vert(entrada, saida, meia_janela, altura, largura, janela):
+    for y in range(meia_janela, altura - meia_janela):
+        for x in range(meia_janela, largura - meia_janela):
+            soma = 0.0
+            for dx in range(-meia_janela, meia_janela + 1):
+                soma += entrada[y, x+dx]
+            saida[y,x] = soma/janela
 
 def imagem_integral(img):
     integral = np.zeros_like(img)
