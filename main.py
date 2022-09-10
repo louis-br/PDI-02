@@ -18,6 +18,34 @@ def filtro_media_ingenuo(img, janela=3):
                     soma += img[y + dy, x + dx]
             img[y, x] = soma/janela_total
 
+def imagem_integral(img):
+    integral = np.zeros_like(img)
+    altura, largura = integral.shape
+
+    for y in range(altura):
+        integral[y, 0] = img[y, 0]
+        for x in range(1, largura):
+            integral[y, x] = integral[y, x-1] + img[y, x]
+
+    for y in range(1, altura):
+        for x in range(largura):
+            integral[y, x] = integral[y-1, x] + integral[y, x]
+    
+    return integral
+
+def filtro_media_integral(img, janela=3):
+    meia_janela = janela//2
+    altura, largura = img.shape
+    integral = imagem_integral(img)
+    for y in range(1, altura - 1):
+        for x in range(1, largura - 1):
+            j2 = min(meia_janela, y, x, (altura - 1) - y, (largura - 1) - x)
+            br = integral[y + j2, x + j2]
+            tr = integral[y + j2, x - j2 - 1] if x - j2 - 1 >= 0 else 0
+            bl = integral[y - j2 - 1, x + j2] if y - j2 - 1 >= 0 else 0
+            tl = integral[y - j2 - 1, x - j2 - 1] if y - j2 - 1 >= 0 and x - j2 - 1 >= 0 else 0
+            soma = br - tr - bl + tl
+            img[y, x] = soma/((2*j2+1)**2)
 
 def main ():
     IMAGE_PREFIX = sys.argv[1] if len(sys.argv) > 1 else INPUT_IMAGE_PREFIX
@@ -35,7 +63,7 @@ def main ():
     B, G, R = cv2.split(img)
 
     for canal in (B, G, R):
-        filtro_media_ingenuo(canal, 3)
+        filtro_media_integral(canal, 3)
 
     img = cv2.merge([B, G, R])
 
