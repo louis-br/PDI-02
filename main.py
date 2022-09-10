@@ -3,19 +3,20 @@ import timeit
 import numpy as np
 import cv2
 
-INPUT_IMAGE_PREFIX =  'b'
+INPUT_IMAGE_PREFIX =  'a'
 INPUT_IMAGE = '01 - Original.bmp'
 
 def filtro_media_ingenuo(img, janela):
     meia_janela = janela//2
     janela_total = (janela)**2
     altura, largura = img.shape
+    img2 = img.copy()
     for y in range(meia_janela, altura - meia_janela):
         for x in range(meia_janela, largura - meia_janela):
             soma = 0.0
             for dy in range(-meia_janela, meia_janela + 1):
                 for dx in range(-meia_janela, meia_janela + 1):
-                    soma += img[y + dy, x + dx]
+                    soma += img2[y + dy, x + dx]
             img[y, x] = soma/janela_total
 
 
@@ -26,8 +27,6 @@ def filtro_media_separavel(img, janela):
     fms_horiz(img, img2, meia_janela, altura, largura, janela)
     fms_vert(img2, img, meia_janela, altura, largura, janela)
 
-
-#2 for, 1 pra x e 1 pra y, e um for para janela (tds pixels na janela)
 def fms_horiz(entrada, saida, meia_janela, altura, largura, janela):
     for y in range(meia_janela, altura - meia_janela):
         for x in range(meia_janela, largura - meia_janela):
@@ -36,8 +35,6 @@ def fms_horiz(entrada, saida, meia_janela, altura, largura, janela):
                 soma += entrada[y+dy, x]
             saida[y,x] = soma/janela
 
-
-#igual
 def fms_vert(entrada, saida, meia_janela, altura, largura, janela):
     for y in range(meia_janela, altura - meia_janela):
         for x in range(meia_janela, largura - meia_janela):
@@ -63,7 +60,7 @@ def main ():
     B, G, R = cv2.split(img)
 
     for canal in (B, G, R):
-        filtro_media_separavel(canal, 7)
+        filtro_media_ingenuo(canal, 7)
 
     img = cv2.merge([B, G, R])
 
