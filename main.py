@@ -3,8 +3,11 @@ import timeit
 import numpy as np
 import cv2
 
-INPUT_IMAGE_PREFIX =  'a'
-INPUT_IMAGE = '01 - Original.bmp'
+INPUT_IMAGES = (
+    ('a', 'exemplos/a01 - Original.bmp'),
+    ('b', 'exemplos/b01 - Original.bmp')
+)
+
 
 def filtro_media_ingenuo(img, janela):
     meia_janela = janela//2
@@ -18,6 +21,7 @@ def filtro_media_ingenuo(img, janela):
                 for dx in range(-meia_janela, meia_janela + 1):
                     soma += img2[y + dy, x + dx]
             img[y, x] = soma/janela_total
+
 
 def filtro_media_separavel(img, janela):
     meia_janela = janela//2
@@ -41,6 +45,7 @@ def fms_vert(entrada, saida, meia_janela, altura, largura, janela):
             for dx in range(-meia_janela, meia_janela + 1):
                 soma += entrada[y, x+dx]
             saida[y,x] = soma/janela
+
 
 def imagem_integral(img):
     integral = np.zeros_like(img)
@@ -71,34 +76,44 @@ def filtro_media_integral(img, janela=3):
             soma = br - tr - bl + tl
             img[y, x] = soma/((2*j2+1)**2)
 
+
+TESTES_JANELAS = (
+    3,
+    7
+)
+
+TESTES_FILTROS = (
+    ("Ingenuo",     filtro_media_ingenuo),
+    ("Separavel",   filtro_media_separavel),
+    ("Integral",    filtro_media_integral),
+)
+
 def main ():
-    IMAGE_PREFIX = sys.argv[1] if len(sys.argv) > 1 else INPUT_IMAGE_PREFIX
-    INPUT = IMAGE_PREFIX + INPUT_IMAGE
+    for nome, img in INPUT_IMAGES:
+        # Abre a imagem em 3 canais BGR.
+        img = cv2.imread (img, cv2.IMREAD_COLOR)
+        if img is None:
+            print ('Erro abrindo a imagem.\n')
+            sys.exit ()
 
-    # Abre a imagem em 3 canais BGR.
-    img = cv2.imread (f'exemplos/{INPUT}', cv2.IMREAD_COLOR)
-    if img is None:
-        print ('Erro abrindo a imagem.\n')
-        sys.exit ()
+        # Convertemos para float32.
+        img = img.astype (np.float32) / 255
 
-    # Convertemos para float32.
-    img = img.astype (np.float32) / 255
+        B, G, R = cv2.split(img)
 
-    B, G, R = cv2.split(img)
+        for nome_filtro, filtro in (TESTES_FILTROS):
+            for janela in (TESTES_JANELAS):
+                start_time = timeit.default_timer ()
 
-    for canal in (B, G, R):
-        filtro_media_integral(canal, 3)
+                canais = [B.copy(), G.copy(), R.copy()]
+                for canal in canais:
+                    filtro(canal, janela)
+                saida = cv2.merge(canais)
 
-    img = cv2.merge([B, G, R])
+                nome_arquivo = f'{nome} - {nome_filtro} {janela}x{janela}'
+                print (f'Tempo {nome_arquivo} : {timeit.default_timer () - start_time}')
 
-    cv2.imwrite (f'out/{IMAGE_PREFIX}01 - Borrada.png', img*255)
-
-    #start_time = timeit.default_timer ()
-    
-    #print ('Tempo: %f' % (timeit.default_timer () - start_time))
-    
-    #cv2.imwrite ('02 - out.png', img_out*255)
-
+                cv2.imwrite (f'out/{nome_arquivo}.png', saida*255)
 
 if __name__ == '__main__':
     main ()
